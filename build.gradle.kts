@@ -10,7 +10,7 @@ group="org.jetbrains.kotlinx"
 version = "0.1.0-SNAPSHOT"
 
 repositories {
-    mavenLocal()
+    maven { url = uri("https://oss.sonatype.org/content/repositories/snapshots/") }
     mavenCentral()
 }
 
