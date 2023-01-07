@@ -72,8 +72,7 @@ fun fd_pread(
     offset: Filesize
 ): Size {
     withScopedMemoryAllocator { allocator ->
-        val iovs = iovs.map { __unsafe__Iovec(allocator.writeToLinearMemory(it), it.size) }
-        val result = __unsafe__fd_pread(allocator, fd, iovs, offset)
+        val result = __unsafe__fd_pread(allocator, fd, iovs.map { __unsafe__Iovec(allocator.writeToLinearMemory(it), it.size) }, offset)
         return result
     }
 }
@@ -99,5 +98,7 @@ fun fd_prestat_dir_name(fd: Fd): String {
     }
 }
 
-
-
+fun println(x: Any?) {
+    val nl = "\n".encodeToByteArray()
+    fd_write(1, listOf(x.toString().encodeToByteArray(), nl))
+}

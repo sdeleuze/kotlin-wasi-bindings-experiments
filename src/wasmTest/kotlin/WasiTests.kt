@@ -1,30 +1,33 @@
 package kotlinx.wasi
 
 import kotlin.test.*
+import kotlin.time.toDuration
+import kotlin.time.DurationUnit
 
 class WasiTests {
+
     @Test
-    fun Test_args_sizes_get() {
+    fun testGetCommandLineArgumentsSize() {
         val (size, size_buffer) = args_sizes_get()
         assertEquals(size, 2)
         assertEquals(size_buffer, 28)
     }
 
     @Test
-    fun Test_args_get() {
+    fun testGetCommandLineArguments() {
         val args: List<String> = args_get()
         assertEquals(args, listOf("argument1", "аргумент2"))
     }
 
     @Test
-    fun Test_environ_sizes_get() {
+    fun testGetEnvironmentVariablesSize() {
         val (size, size_buffer) = environ_sizes_get()
         assertEquals(size, 2)
         assertEquals(size_buffer, 48)
     }
 
     @Test
-    fun Test_environ_get() {
+    fun testGetEnvironmentVariables() {
         val environ: Map<String, String> = environ_get()
         assertEquals(
             environ,
@@ -37,23 +40,30 @@ class WasiTests {
 
     @Test
     fun testPrintln() {
-        val nl = "\n".encodeToByteArray()
-        fun wasiPrintln(x: Any?) {
-            fd_write(1, listOf(x.toString().encodeToByteArray(), nl))
-        }
+        kotlinx.wasi.println("Hello!")
+    }
 
-        for (arg in environ_get().entries) {
-            wasiPrintln(arg)
-        }
+    @Test
+    fun testCreateDirectory() {
+       path_create_directory(3, "build/testDir")
+    }
 
-        repeat(6) { fd ->
-            try {
-                wasiPrintln(fd_prestat_get(fd))
-                wasiPrintln(fd_prestat_dir_name(fd))
-            } catch (e: WasiError) {
-                wasiPrintln("WASI error: $e")
-            }
-        }
+    @Test
+    fun testCreateFile() {
+        path_open(3, 0, "build/testFile", OFLAGS.CREAT, 0, 0, 0)
+    }
+
+    @Test
+    fun testGetDirectoryName() {
+        println(fd_prestat_dir_name(3))
+    }
+
+    @Test
+    fun testGetTime() {
+        val resolution = clock_res_get(Clockid.REALTIME)
+        val duration: Timestamp = clock_time_get(Clockid.REALTIME, resolution)
+        kotlinx.wasi.println("Resolution ${resolution}")
+        kotlinx.wasi.println("Duration ${duration.toDuration(DurationUnit.NANOSECONDS)}")
     }
 }
 
