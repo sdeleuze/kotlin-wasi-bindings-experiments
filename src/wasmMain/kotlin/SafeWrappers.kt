@@ -105,19 +105,19 @@ fun println(x: Any?) {
 
 fun fd_readdir(fd: Fd): List<String> {
     // TODO Support inovcations with size > bufferSize
+    val bufferSize = 4096
+    val byteArrayBuf = ByteArray(bufferSize)
     withScopedMemoryAllocator { allocator ->
-        val bufferSize = 16384
-        val byteArrayBuf = ByteArray(bufferSize)
         var ptr = allocator.writeToLinearMemory(byteArrayBuf);
         val size = __unsafe__fd_readdir(allocator, fd, ptr, byteArrayBuf.size, 0)
         assert(size < bufferSize)
         val names = mutableListOf<String>()
-        var index = 0
-        while (index < size) {
-            val dirent = __load_Dirent(ptr + index)
-            index += 24;
-            names.add(loadString(ptr + index, dirent.d_namlen))
-            index += dirent.d_namlen;
+        var offset = 0
+        while (offset < size) {
+            val dirent = __load_Dirent(ptr + offset)
+            offset += 24;
+            names.add(loadString(ptr + offset, dirent.d_namlen))
+            offset += dirent.d_namlen;
         }
         return names
     }
