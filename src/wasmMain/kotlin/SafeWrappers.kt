@@ -102,3 +102,23 @@ fun println(x: Any?) {
     val nl = "\n".encodeToByteArray()
     fd_write(1, listOf(x.toString().encodeToByteArray(), nl))
 }
+
+fun fd_readdir(fd: Fd): List<String> {
+    // TODO Support inovcations with size > bufferSize
+    withScopedMemoryAllocator { allocator ->
+        val bufferSize = 16384
+        val byteArrayBuf = ByteArray(bufferSize)
+        var ptr = allocator.writeToLinearMemory(byteArrayBuf);
+        val size = __unsafe__fd_readdir(allocator, fd, ptr, byteArrayBuf.size, 0)
+        assert(size < bufferSize)
+        val names = mutableListOf<String>()
+        var index = 0
+        while (index < size) {
+            val dirent = __load_Dirent(ptr + index)
+            index += 24;
+            names.add(loadString(ptr + index, dirent.d_namlen))
+            index += dirent.d_namlen;
+        }
+        return names
+    }
+}

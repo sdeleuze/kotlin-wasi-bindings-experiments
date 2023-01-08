@@ -55,7 +55,7 @@ class WasiTests {
 
     @Test
     fun testGetDirectoryName() {
-        println(fd_prestat_dir_name(3))
+        kotlinx.wasi.println(fd_prestat_dir_name(3))
     }
 
     @Test
@@ -64,6 +64,13 @@ class WasiTests {
         val duration: Timestamp = clock_time_get(Clockid.REALTIME, resolution)
         kotlinx.wasi.println("Resolution ${resolution}")
         kotlinx.wasi.println("Duration ${duration.toDuration(DurationUnit.NANOSECONDS)}")
+    }
+
+    @Test
+    fun testListFiles() {
+        for (file in fd_readdir(3)) {
+            kotlinx.wasi.println(file)
+        }
     }
 }
 
