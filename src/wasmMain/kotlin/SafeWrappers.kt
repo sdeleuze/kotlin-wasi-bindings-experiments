@@ -104,21 +104,31 @@ fun println(x: Any?) {
 }
 
 fun fd_readdir(fd: Fd): List<String> {
-    // TODO Support inovcations with size > bufferSize
-    val bufferSize = 4096
+    val bufferSize = 1024
     val byteArrayBuf = ByteArray(bufferSize)
+    val names = mutableListOf<String>()
+    var cookie: Dircookie = 0
     withScopedMemoryAllocator { allocator ->
-        var ptr = allocator.writeToLinearMemory(byteArrayBuf);
-        val size = __unsafe__fd_readdir(allocator, fd, ptr, byteArrayBuf.size, 0)
-        assert(size < bufferSize)
-        val names = mutableListOf<String>()
-        var offset = 0
-        while (offset < size) {
-            val dirent = __load_Dirent(ptr + offset)
-            offset += 24;
-            names.add(loadString(ptr + offset, dirent.d_namlen))
-            offset += dirent.d_namlen;
-        }
-        return names
+        val ptr = allocator.writeToLinearMemory(byteArrayBuf);
+        do {
+            var offset = 0
+            val size = __unsafe__fd_readdir(allocator, fd, ptr, byteArrayBuf.size, cookie)
+            while(true) {
+                if (offset + 24 >  size) {
+                    break
+                }
+                val dirent = __load_Dirent(ptr + offset)
+                cookie = dirent.d_next
+                offset += 24;
+                if (offset + dirent.d_namlen <  size) {
+                    names.add(loadString(ptr + offset, dirent.d_namlen))
+                    offset += dirent.d_namlen;
+                }
+                else {
+                    break
+                }
+            }
+        } while (size == bufferSize)
     }
+    return names
 }
