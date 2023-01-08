@@ -72,6 +72,19 @@ class WasiTests {
             kotlinx.wasi.println(file)
         }
     }
+
+    @Test
+    fun testListFilesSubDir() {
+        val fd = path_open(fd = 3, dirflags = 0, path = "build",
+            oflags = OFLAGS.DIRECTORY,
+            fs_rights_base = RIGHTS.FD_READDIR,
+            fs_rights_inheriting = 0,
+            fdflags = 0,
+        )
+        for (file in fd_readdir(fd)) {
+            kotlinx.wasi.println(file)
+        }
+    }
 }
 
 @JsFun("""
